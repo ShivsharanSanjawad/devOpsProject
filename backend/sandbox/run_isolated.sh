@@ -109,6 +109,8 @@ if [ -n "$CGROUP_FLAG" ]; then
         --processes=64 \
         --meta="$META_FILE" \
         --silent \
+        -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/lib/jvm/java-17-openjdk-amd64/bin \
+        -E HOME=/box \
         --stdin=.input \
         --stdout=output.txt \
         --stderr=error.txt \
@@ -125,6 +127,8 @@ else
         --processes=64 \
         --meta="$META_FILE" \
         --silent \
+        -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/lib/jvm/java-17-openjdk-amd64/bin \
+        -E HOME=/box \
         --stdin=.input \
         --stdout=output.txt \
         --stderr=error.txt \
