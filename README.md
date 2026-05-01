@@ -60,7 +60,7 @@ It will be updated later with the final lab architecture diagram and deployment 
 ### Quick Start (Docker Compose)
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/ShivsharanSanjawad/devOpsProject
 cd Devhacks
 cp .env.example .env
 docker compose up --build
