@@ -151,24 +151,43 @@
         groups: docker
         append: true
 
+    # ── Wait until Jenkins API responds ───────────────────────
+    - name: Wait for Jenkins to accept API connections
+      uri:
+        url: "{{ jenkins_url }}/api/json"
+        user: "{{ jenkins_admin_user }}"
+        password: "{{ jenkins_admin_password }}"
+        force_basic_auth: true
+        status_code: 200
+      register: jenkins_api
+      until: jenkins_api.status == 200
+      retries: 30
+      delay: 10
+
+    - name: Download Jenkins CLI jar
+      get_url:
+        url: "{{ jenkins_url }}/jnlpJars/jenkins-cli.jar"
+        dest: /opt/jenkins-cli.jar
+        mode: "0644"
+        force: true
+
     # ────────────────────────────────────────────────────────────
-    # INSTALL PLUGINS via jenkins-plugin-cli
+    # INSTALL PLUGINS via Jenkins CLI
     # ────────────────────────────────────────────────────────────
     - name: Install required Jenkins plugins
       shell: |
-        /usr/bin/jenkins-plugin-cli --plugins \
-          github-integration:latest \
-          sonarqube-scanner:latest \
-          ssh-agent:latest \
-          ws-cleanup:latest \
-          pipeline-stage-view:latest \
-          git:latest \
-          workflow-aggregator:latest \
-          plain-credentials:latest
+        {{ jenkins_cli }} install-plugin \
+          github-integration \
+          sonarqube-scanner \
+          ssh-agent \
+          ws-cleanup \
+          pipeline-stage-view \
+          git \
+          workflow-aggregator \
+          plain-credentials
       register: plugin_install
-      changed_when: "'Installed' in plugin_install.stdout"
 
-    # Restart so plugins are fully loaded before we run CLI scripts
+    # Restart so plugins are fully loaded before we run Groovy scripts
     - name: Restart Jenkins after plugin installation
       service:
         name: jenkins
@@ -180,28 +199,22 @@
         delay: 20
         timeout: 180
 
-    # ── Wait until Jenkins CLI responds ───────────────────────
-    - name: Wait for Jenkins to accept CLI connections
+    # ── Wait until Jenkins API responds after restart ─────────
+    - name: Wait for Jenkins to accept API connections after restart
       uri:
         url: "{{ jenkins_url }}/api/json"
         user: "{{ jenkins_admin_user }}"
         password: "{{ jenkins_admin_password }}"
         force_basic_auth: true
         status_code: 200
-      register: jenkins_api
-      until: jenkins_api.status == 200
-      retries: 20
+      register: jenkins_api_again
+      until: jenkins_api_again.status == 200
+      retries: 30
       delay: 10
 
     # ────────────────────────────────────────────────────────────
     # JENKINS CLI SETUP
     # ────────────────────────────────────────────────────────────
-    - name: Download Jenkins CLI jar
-      get_url:
-        url: "{{ jenkins_url }}/jnlpJars/jenkins-cli.jar"
-        dest: /opt/jenkins-cli.jar
-        mode: "0644"
-        force: true
 
     - name: Template SSH credential Groovy script
       template:
