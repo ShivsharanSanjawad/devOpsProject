@@ -5,6 +5,8 @@
   vars:
     mysql_mount_path: /data/mysql
     node_exporter_version: "1.8.1"
+    app_deploy_path: /opt/codearena
+    app_public_ip: "{{ ansible_host }}"
 
   tasks:
     - name: Install base packages
@@ -185,3 +187,54 @@
         state: started
         enabled: true
         daemon_reload: true
+
+    # ── First-time App Deployment ──────────────────────────────
+    - name: Install git
+      apt:
+        name: git
+        state: present
+        update_cache: false
+
+    - name: Create app deploy directory
+      file:
+        path: "{{ app_deploy_path }}"
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: "0755"
+
+    - name: Clone repo (skip if already present)
+      git:
+        repo: "https://github.com/{{ github_repo }}.git"
+        dest: "{{ app_deploy_path }}"
+        version: main
+        force: false
+      become_user: ubuntu
+      ignore_errors: true  # Repo may already exist — next task handles that
+
+    - name: Pull latest code if repo already existed
+      shell: |
+        cd {{ app_deploy_path }}
+        git fetch --all
+        git checkout main
+        git pull origin main
+      become_user: ubuntu
+      changed_when: false
+
+    - name: Render .env file from template
+      template:
+        src: "{{ playbook_dir }}/templates/app-env.j2"
+        dest: "{{ app_deploy_path }}/.env"
+        owner: ubuntu
+        group: ubuntu
+        mode: "0600"
+
+    - name: First docker compose up (build + start all services)
+      shell: |
+        cd {{ app_deploy_path }}
+        docker compose up --build -d
+      changed_when: false
+
+    - name: Show app URL
+      debug:
+        msg: "🟢 App deployed → http://{{ ansible_host }}"

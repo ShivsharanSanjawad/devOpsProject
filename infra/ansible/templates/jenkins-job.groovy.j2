@@ -1,0 +1,42 @@
+// Create the codearena pipeline job pointing at GitHub SCM
+// Run via Jenkins CLI after Pipeline + GitHub Integration plugins are installed
+
+import jenkins.model.*
+import org.jenkinsci.plugins.workflow.job.*
+import org.jenkinsci.plugins.workflow.cps.*
+import hudson.plugins.git.*
+import com.cloudbees.jenkins.GitHubPushTrigger
+
+def instance = Jenkins.getInstance()
+def jobName = "codearena"
+
+// Remove existing job if present (makes it idempotent on re-run)
+def existingJob = instance.getItem(jobName)
+if (existingJob) {
+    existingJob.delete()
+}
+
+// Build Git SCM config
+def repoUrl = "https://github.com/{{ github_repo }}.git"
+def userRemoteConfig = new UserRemoteConfig(repoUrl, "origin", null, null)
+def branchSpec = new BranchSpec("*/main")
+def gitSCM = new GitSCM(
+    [userRemoteConfig],
+    [branchSpec],
+    null, null, []
+)
+
+// Pipeline from SCM (reads Jenkinsfile from repo root)
+def definition = new CpsScmFlowDefinition(gitSCM, "Jenkinsfile")
+definition.setLightweight(true)
+
+// Create the job
+def job = instance.createProject(WorkflowJob.class, jobName)
+job.setDefinition(definition)
+
+// Enable the GitHub webhook trigger
+job.addTrigger(new GitHubPushTrigger())
+job.save()
+
+instance.save()
+println "✅ Pipeline job '${jobName}' created → ${repoUrl}"

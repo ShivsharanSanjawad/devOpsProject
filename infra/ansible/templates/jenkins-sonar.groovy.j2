@@ -1,0 +1,43 @@
+// Configure SonarQube server connection
+// Run via Jenkins CLI after SonarQube Scanner plugin is installed
+
+import jenkins.model.*
+import hudson.plugins.sonar.*
+import hudson.plugins.sonar.model.*
+
+def instance = Jenkins.getInstance()
+def sonarDesc = instance.getDescriptor(SonarGlobalConfiguration.class)
+
+def tokenCredId = "sonarqube-token"
+
+// Register the SonarQube token as a secret text credential first
+import com.cloudbees.plugins.credentials.*
+import com.cloudbees.plugins.credentials.domains.*
+import com.cloudbees.plugins.credentials.impl.*
+import org.jenkinsci.plugins.plaincredentials.impl.*
+import hudson.util.Secret
+
+def store = SystemCredentialsProvider.getInstance().getStore()
+store.getCredentials(Domain.global()).find { it.id == tokenCredId }?.with {
+    store.removeCredentials(Domain.global(), it)
+}
+store.addCredentials(Domain.global(), new StringCredentialsImpl(
+    CredentialsScope.GLOBAL,
+    tokenCredId,
+    "SonarQube API Token",
+    Secret.fromString("{{ sonar_token }}")
+))
+
+// Configure the SonarQube server
+def installations = [
+    new SonarInstallation(
+        "sonarqube",                      // name (must match SONAR_SERVER in Jenkinsfile)
+        "http://{{ sonar_private_ip }}:9000",
+        tokenCredId,                       // token credential ID
+        null, null, null, null, null
+    )
+]
+sonarDesc.setInstallations(installations as SonarInstallation[])
+sonarDesc.save()
+instance.save()
+println "✅ SonarQube server configured: http://{{ sonar_private_ip }}:9000"

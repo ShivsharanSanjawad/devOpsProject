@@ -1,0 +1,35 @@
+# =============================================
+#  CodeArena — All-in-one configuration vars
+#  Edit these BEFORE running site.yml
+# =============================================
+
+# ── Jenkins admin account ─────────────────────
+jenkins_admin_user: admin
+jenkins_admin_password: "Admin@12345"   # Change this!
+
+# ── SonarQube admin password ──────────────────
+# SonarQube ships with admin/admin — this changes it on first setup
+sonar_admin_password: "Sonar@12345"     # Change this!
+
+# ── Grafana admin password ────────────────────
+grafana_admin_password: "Grafana@12345" # Change this!
+
+# ── GitHub ────────────────────────────────────
+# Repo slug (owner/repo) — used for pipeline job + webhook
+github_repo: "ShivsharanSanjawad/devOpsProject"
+# Personal Access Token with repo + admin:repo_hook scopes
+# Create at: https://github.com/settings/tokens
+github_token: "ghp_REPLACE_ME"
+
+# ── App .env secrets ──────────────────────────
+app_db_username: "root"
+app_db_password: "DB@SecurePass123"    # Change this!
+app_jwt_secret: "change-me-to-a-very-long-random-secret-at-least-32-chars"
+app_gemini_api_key: ""
+app_mail_enabled: "false"
+app_mail_username: ""
+app_mail_password: ""
+app_spring_profiles: ""
+app_google_client_id: ""
+app_google_client_secret: ""
+app_cookie_secure: "true"

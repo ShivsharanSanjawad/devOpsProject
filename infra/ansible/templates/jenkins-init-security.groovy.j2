@@ -1,0 +1,24 @@
+// 01 — Skip setup wizard and create admin user
+// Runs on first Jenkins boot from /var/lib/jenkins/init.groovy.d/
+
+import jenkins.model.*
+import hudson.security.*
+import jenkins.install.*
+
+def instance = Jenkins.getInstance()
+
+// Skip the setup wizard
+instance.setInstallState(InstallState.INITIAL_SETUP_COMPLETED)
+
+// Create admin user
+def hudsonRealm = new HudsonPrivateSecurityRealm(false)
+hudsonRealm.createAccount("{{ jenkins_admin_user }}", "{{ jenkins_admin_password }}")
+instance.setSecurityRealm(hudsonRealm)
+
+// Full access for logged-in users, no anonymous access
+def strategy = new FullControlOnceLoggedInAuthorizationStrategy()
+strategy.setAllowAnonymousRead(false)
+instance.setAuthorizationStrategy(strategy)
+
+instance.save()
+println "✅ Jenkins admin user created: {{ jenkins_admin_user }}"

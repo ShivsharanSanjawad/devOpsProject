@@ -95,6 +95,77 @@
         state: started
         enabled: true
 
+    - name: Wait for SonarQube to be ready (port 9000)
+      wait_for:
+        port: 9000
+        delay: 15
+        timeout: 300
+
+    # Give the web server a few extra seconds to fully initialize
+    - name: Pause for SonarQube web init
+      pause:
+        seconds: 20
+
+    # ── Change default admin password ─────────────────────────────
+    - name: Change SonarQube admin password
+      uri:
+        url: "http://localhost:9000/api/users/change_password"
+        method: POST
+        user: admin
+        password: admin
+        force_basic_auth: true
+        body_format: form-urlencoded
+        body:
+          login: admin
+          password: "{{ sonar_admin_password }}"
+          previousPassword: admin
+        status_code: [204, 400]  # 400 = already changed, that's fine
+      ignore_errors: true
+
+    # ── Generate API token for Jenkins ────────────────────────────
+    - name: Revoke existing jenkins-token if any (idempotent)
+      uri:
+        url: "http://localhost:9000/api/user_tokens/revoke"
+        method: POST
+        user: admin
+        password: "{{ sonar_admin_password }}"
+        force_basic_auth: true
+        body_format: form-urlencoded
+        body:
+          login: admin
+          name: jenkins-token
+        status_code: [204, 400]
+      ignore_errors: true
+
+    - name: Generate SonarQube API token for Jenkins
+      uri:
+        url: "http://localhost:9000/api/user_tokens/generate"
+        method: POST
+        user: admin
+        password: "{{ sonar_admin_password }}"
+        force_basic_auth: true
+        body_format: form-urlencoded
+        body:
+          name: jenkins-token
+        return_content: true
+        status_code: 200
+      register: sonar_token_response
+
+    - name: Set sonar_token fact (shared with jenkins play via hostvars)
+      set_fact:
+        sonar_token: "{{ sonar_token_response.json.token }}"
+
+    - name: Save sonar token to Ansible controller
+      local_action:
+        module: copy
+        content: "{{ sonar_token }}"
+        dest: /tmp/sonar_token.txt
+        mode: "0600"
+
+    - name: Show generated token (save this!)
+      debug:
+        msg: "SonarQube token for Jenkins: {{ sonar_token }}"
+
     # ── node_exporter ──────────────────────────────────────────
     - name: Check if node_exporter is already installed
       stat:

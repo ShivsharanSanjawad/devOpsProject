@@ -1,0 +1,20 @@
+###############################################################
+#  CodeArena — Master Playbook
+#
+#  Runs all three playbooks in dependency order:
+#    1. app.yml  → App EC2  (Docker, Nginx, EBS, repo, first deploy)
+#    2. sonar.yml → Sonar EC2 (SonarQube + API token generation)
+#    3. jenkins.yml → Jenkins EC2 (Jenkins + plugins + credentials +
+#                     pipeline job + GitHub webhook + monitoring)
+#
+#  Usage:
+#    ansible-playbook site.yml
+#
+#  Edit group_vars/all.yml before running.
+###############################################################
+
+- import_playbook: app.yml
+
+- import_playbook: sonar.yml
+
+- import_playbook: jenkins.yml
