@@ -35,6 +35,8 @@ pipeline {
       steps {
         dir('backend') {
           withSonarQubeEnv(env.SONAR_SERVER) {
+            // Ensure mvnw is executable, as Windows git commits often lack the +x bit
+            sh 'chmod +x ./mvnw'
             // Uses ./mvnw + sonar-maven-plugin declared in pom.xml
             sh './mvnw -B -DskipTests sonar:sonar'
           }
