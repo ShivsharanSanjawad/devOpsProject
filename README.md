@@ -61,7 +61,7 @@ It will be updated later with the final lab architecture diagram and deployment 
 
 ```bash
 git clone https://github.com/ShivsharanSanjawad/devOpsProject
-cd Devhacks
+cd devOpsProject
 cp .env.example .env
 docker compose up --build
 ```

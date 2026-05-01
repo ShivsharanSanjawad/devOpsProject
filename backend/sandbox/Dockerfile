@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y \
 
 # Copy the isolation script
 COPY run_isolated.sh /usr/local/bin/run_isolated.sh
-RUN chmod +x /usr/local/bin/run_isolated.sh
+RUN sed -i 's/\r$//' /usr/local/bin/run_isolated.sh && chmod +x /usr/local/bin/run_isolated.sh
 
 # Set working directory
 WORKDIR /home
