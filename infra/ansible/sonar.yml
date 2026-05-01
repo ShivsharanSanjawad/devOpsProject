@@ -1,0 +1,95 @@
+- name: Configure SonarQube EC2
+  hosts: sonar
+  become: true
+
+  vars:
+    sonar_version: "9.9.4.87374"
+    sonar_user: sonar
+    sonar_home: /opt/sonarqube
+
+  tasks:
+    - name: Set vm.max_map_count
+      sysctl:
+        name: vm.max_map_count
+        value: "262144"
+        state: present
+        reload: true
+
+    - name: Set fs.file-max
+      sysctl:
+        name: fs.file-max
+        value: "65536"
+        state: present
+        reload: true
+
+    - name: Install Java
+      apt:
+        name: openjdk-17-jre
+        update_cache: true
+
+    - name: Create sonar user
+      user:
+        name: "{{ sonar_user }}"
+        shell: /bin/bash
+        create_home: false
+
+    - name: Download SonarQube
+      get_url:
+        url: "https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-{{ sonar_version }}.zip"
+        dest: /tmp/sonarqube.zip
+        mode: "0644"
+
+    - name: Install unzip
+      apt:
+        name: unzip
+        update_cache: true
+
+    - name: Unzip SonarQube
+      unarchive:
+        src: /tmp/sonarqube.zip
+        dest: /opt/
+        remote_src: true
+
+    - name: Set SonarQube directory
+      command: "mv /opt/sonarqube-{{ sonar_version }} {{ sonar_home }}"
+      args:
+        creates: "{{ sonar_home }}"
+
+    - name: Set ownership
+      file:
+        path: "{{ sonar_home }}"
+        owner: "{{ sonar_user }}"
+        group: "{{ sonar_user }}"
+        recurse: true
+
+    - name: Create systemd service
+      copy:
+        dest: /etc/systemd/system/sonarqube.service
+        content: |
+          [Unit]
+          Description=SonarQube service
+          After=network.target
+
+          [Service]
+          Type=forking
+          ExecStart={{ sonar_home }}/bin/linux-x86-64/sonar.sh start
+          ExecStop={{ sonar_home }}/bin/linux-x86-64/sonar.sh stop
+          User={{ sonar_user }}
+          Group={{ sonar_user }}
+          Restart=always
+          LimitNOFILE=65536
+          LimitNPROC=4096
+          TimeoutStartSec=300
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Reload systemd
+      systemd:
+        daemon_reload: true
+
+    - name: Enable and start SonarQube
+      service:
+        name: sonarqube
+        state: started
+        enabled: true

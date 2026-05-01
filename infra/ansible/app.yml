@@ -1,0 +1,75 @@
+- name: Configure App EC2
+  hosts: app
+  become: true
+
+  vars:
+    mysql_mount_device: /dev/xvdf
+    mysql_mount_path: /data/mysql
+
+  tasks:
+    - name: Install base packages
+      apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+        update_cache: true
+
+    - name: Add Docker apt key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker apt repository
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu jammy stable
+        state: present
+
+    - name: Install Docker, Compose, and Nginx
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - docker-compose-plugin
+          - nginx
+        update_cache: true
+
+    - name: Ensure docker is running
+      service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Create MySQL mount path
+      file:
+        path: "{{ mysql_mount_path }}"
+        state: directory
+        mode: "0755"
+
+    - name: Create filesystem if missing
+      filesystem:
+        fstype: ext4
+        dev: "{{ mysql_mount_device }}"
+
+    - name: Mount MySQL data volume
+      mount:
+        path: "{{ mysql_mount_path }}"
+        src: "{{ mysql_mount_device }}"
+        fstype: ext4
+        opts: defaults,nofail
+        state: mounted
+
+    - name: Copy nginx.conf
+      copy:
+        src: "{{ playbook_dir }}/../../nginx.conf"
+        dest: /etc/nginx/nginx.conf
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Ensure Nginx is running
+      service:
+        name: nginx
+        state: restarted
+        enabled: true

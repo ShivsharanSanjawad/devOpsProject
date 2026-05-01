@@ -1,0 +1,55 @@
+- name: Configure Jenkins EC2
+  hosts: jenkins
+  become: true
+
+  tasks:
+    - name: Install base packages
+      apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+        update_cache: true
+
+    - name: Add Jenkins apt key
+      apt_key:
+        url: https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
+        state: present
+
+    - name: Add Jenkins apt repository
+      apt_repository:
+        repo: deb https://pkg.jenkins.io/debian-stable binary/
+        state: present
+
+    - name: Add Docker apt key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker apt repository
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu jammy stable
+        state: present
+
+    - name: Install Jenkins, Java, and Docker
+      apt:
+        name:
+          - openjdk-17-jre
+          - jenkins
+          - docker-ce
+          - docker-ce-cli
+          - docker-compose-plugin
+        update_cache: true
+
+    - name: Ensure Jenkins is started
+      service:
+        name: jenkins
+        state: started
+        enabled: true
+
+    - name: Add jenkins user to docker group
+      user:
+        name: jenkins
+        groups: docker
+        append: true
