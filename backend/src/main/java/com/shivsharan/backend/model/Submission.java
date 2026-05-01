@@ -69,6 +69,10 @@ public class Submission {
     @Column(name = "compile_error", columnDefinition = "text")
     private String compileError;
 
+    @Lob
+    @Column(name = "verdict_detail", columnDefinition = "text")
+    private String verdictDetail;
+
     @Column(name = "judged_at")
     private Instant judgedAt;
 
@@ -94,8 +98,12 @@ public class Submission {
         this.submittedAt = Instant.now() ;
     }
 
-    public void setVerdictDetail(String s) {
+    public void setVerdictDetail(String verdictDetail) {
+        this.verdictDetail = verdictDetail;
+    }
 
+    public String getVerdictDetail() {
+        return verdictDetail;
     }
 
     // Expose IDs for JSON serialization

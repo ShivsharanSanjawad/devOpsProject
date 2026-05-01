@@ -631,9 +631,15 @@ public class JudgeService {
 
             CheckerType checker = CheckerType.valueOf(
                     checkerTypeStr == null ? "EXACT" : checkerTypeStr.toUpperCase());
-            boolean ok = checkOutput(actual, expected, checker);
-            return new TestCaseResult(tcId, ok ? Verdict.AC.name() : Verdict.WA.name(), timeMs,
-                    memKb, ok ? "" : "Output mismatch");
+                boolean ok = checkOutput(actual, expected, checker);
+                if (ok) {
+                return new TestCaseResult(tcId, Verdict.AC.name(), timeMs, memKb, "");
+                }
+
+                String actualPreview = truncateOutput(actual, 4000);
+                String expectedPreview = truncateOutput(expected, 4000);
+                return new TestCaseResult(tcId, Verdict.WA.name(), timeMs, memKb, "Output mismatch",
+                    actualPreview, expectedPreview);
 
         } catch (Exception e) {
             logger.error("Error running test case {} in sandbox", tcId, e);
@@ -758,6 +764,16 @@ public class JudgeService {
                 .results()
                 .map(m -> Integer.parseInt(m.group(1)))
                 .findFirst().orElse(-1);
+    }
+
+    private String truncateOutput(String text, int maxChars) {
+        if (text == null) {
+            return "";
+        }
+        if (text.length() <= maxChars) {
+            return text;
+        }
+        return text.substring(0, maxChars) + "\n... (truncated)";
     }
 
     private boolean checkOutput(String actual, String expected, CheckerType checker) {

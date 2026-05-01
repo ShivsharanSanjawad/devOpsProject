@@ -33,6 +33,16 @@ const getVerdictInfo = (status) => {
   }
 };
 
+const parseVerdictDetail = (detail) => {
+  if (!detail) return [];
+  try {
+    const parsed = JSON.parse(detail);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
 const ProblemSolvingPage = () => {
   const { problemId } = useParams();
   const [searchParams] = useSearchParams();
@@ -65,6 +75,9 @@ const ProblemSolvingPage = () => {
   const [activeTestCase, setActiveTestCase] = useState(0);
   const [consoleTab, setConsoleTab] = useState('testcases');
   const [isSolutionOpen, setIsSolutionOpen] = useState(false);
+
+  const verdictDetails = parseVerdictDetail(submissionResult?.verdictDetail);
+  const firstFailedCase = verdictDetails.find((entry) => entry?.verdict && entry.verdict !== 'AC');
 
 
 
@@ -469,7 +482,7 @@ const ProblemSolvingPage = () => {
           </div>
 
           {/* Bottom Console Panel */}
-          <div className="h-[250px] flex flex-col border-t border-[#1a1f2e] bg-[#0b0f19] shrink-0">
+          <div className="h-[250px] min-h-[180px] max-h-[60vh] resize-y overflow-auto flex flex-col border-t border-[#1a1f2e] bg-[#0b0f19] shrink-0">
             <div className="flex items-center gap-6 px-4 border-b border-[#1a1f2e] bg-[#0b0f19]">
               <button
                 className={`flex items-center gap-2 py-3 text-[13px] font-bold border-b-2 transition-colors ${consoleTab === 'testcases' ? 'text-cyan-400 border-cyan-400' : 'text-slate-400 border-transparent hover:text-slate-200'}`}
@@ -570,6 +583,32 @@ const ProblemSolvingPage = () => {
                         <pre className="bg-pink-500/5 border border-pink-500/20 text-pink-200/80 p-4 rounded-lg text-xs font-mono overflow-x-auto">
                           {submissionResult.compileError}
                         </pre>
+                      </div>
+                    )}
+
+                    {/* Wrong Answer Output */}
+                    {firstFailedCase && (firstFailedCase.actualOutput != null || firstFailedCase.expectedOutput != null || firstFailedCase.message) && (
+                      <div className="mt-4">
+                        <p className="text-[11px] font-bold text-red-400 mb-2 tracking-wider uppercase">Wrong Answer Details</p>
+                        {firstFailedCase.message && (
+                          <p className="text-xs text-slate-400 mb-2">{firstFailedCase.message}</p>
+                        )}
+                        {firstFailedCase.actualOutput != null && (
+                          <div className="mb-3">
+                            <p className="text-[11px] font-bold text-slate-500 mb-1 tracking-wider uppercase">Your Output</p>
+                            <pre className="bg-[#05070a] border border-[#1a1f2e] text-slate-200 p-3 rounded-lg text-xs font-mono overflow-x-auto">
+                              {firstFailedCase.actualOutput === '' ? '(empty)' : firstFailedCase.actualOutput}
+                            </pre>
+                          </div>
+                        )}
+                        {firstFailedCase.expectedOutput != null && (
+                          <div>
+                            <p className="text-[11px] font-bold text-slate-500 mb-1 tracking-wider uppercase">Expected Output</p>
+                            <pre className="bg-[#05070a] border border-[#1a1f2e] text-slate-200 p-3 rounded-lg text-xs font-mono overflow-x-auto">
+                              {firstFailedCase.expectedOutput === '' ? '(empty)' : firstFailedCase.expectedOutput}
+                            </pre>
+                          </div>
+                        )}
                       </div>
                     )}
 

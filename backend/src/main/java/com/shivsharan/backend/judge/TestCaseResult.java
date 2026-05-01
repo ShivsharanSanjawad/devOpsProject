@@ -6,6 +6,8 @@ public class TestCaseResult {
     private Integer timeMs;
     private Integer memoryKb;
     private String message;
+    private String actualOutput;
+    private String expectedOutput;
 
     public TestCaseResult() {}
 
@@ -15,6 +17,17 @@ public class TestCaseResult {
         this.timeMs = timeMs;
         this.memoryKb = memoryKb;
         this.message = message;
+    }
+
+    public TestCaseResult(Long testCaseId, String verdict, Integer timeMs, Integer memoryKb, String message,
+                          String actualOutput, String expectedOutput) {
+        this.testCaseId = testCaseId;
+        this.verdict = verdict;
+        this.timeMs = timeMs;
+        this.memoryKb = memoryKb;
+        this.message = message;
+        this.actualOutput = actualOutput;
+        this.expectedOutput = expectedOutput;
     }
 
     public Long getTestCaseId() {
@@ -55,5 +68,21 @@ public class TestCaseResult {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public String getActualOutput() {
+        return actualOutput;
+    }
+
+    public void setActualOutput(String actualOutput) {
+        this.actualOutput = actualOutput;
+    }
+
+    public String getExpectedOutput() {
+        return expectedOutput;
+    }
+
+    public void setExpectedOutput(String expectedOutput) {
+        this.expectedOutput = expectedOutput;
     }
 }
