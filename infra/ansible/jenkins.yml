@@ -161,7 +161,7 @@
         status_code: 200
       register: jenkins_api
       until: jenkins_api.status == 200
-      retries: 30
+      retries: 60
       delay: 10
 
     - name: Download Jenkins CLI jar
@@ -209,7 +209,7 @@
         status_code: 200
       register: jenkins_api_again
       until: jenkins_api_again.status == 200
-      retries: 30
+      retries: 60
       delay: 10
 
     # ────────────────────────────────────────────────────────────
