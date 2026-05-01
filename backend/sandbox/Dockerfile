@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
     g++ \
     git \
     make \
+    pkg-config \
     python3 \
     nodejs \
     openjdk-17-jdk-headless \
@@ -17,6 +18,7 @@ RUN apt-get update && apt-get install -y \
     time \
     procps \
     libcap-dev \
+    libseccomp-dev \
     asciidoc \
     && rm -rf /var/lib/apt/lists/*
 
