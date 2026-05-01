@@ -133,14 +133,15 @@ public class UserController {
             );
 
             if (authentication.isAuthenticated()) {
-                String accessToken = jwtUtility.generateToken(loginRequest.getUsername());
-                String refreshToken = jwtUtility.generateRefreshToken(loginRequest.getUsername());
+                String authenticatedUsername = authentication.getName();
+                String accessToken = jwtUtility.generateToken(authenticatedUsername);
+                String refreshToken = jwtUtility.generateRefreshToken(authenticatedUsername);
 
                 JwtTokenResponse tokenResponse = JwtTokenResponse.builder()
                         .accessToken(accessToken)
                         .refreshToken(refreshToken)
                         .expiresIn(3600000L)
-                        .username(loginRequest.getUsername())
+                        .username(authenticatedUsername)
                         .build();
 
                 return ResponseEntity.ok(tokenResponse);
