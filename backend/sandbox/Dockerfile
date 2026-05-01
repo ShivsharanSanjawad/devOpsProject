@@ -19,7 +19,6 @@ RUN apt-get update && apt-get install -y \
     procps \
     libcap-dev \
     libseccomp-dev \
-    libsystemd-dev \
     asciidoc \
     && rm -rf /var/lib/apt/lists/*
 
@@ -29,7 +28,7 @@ RUN git clone --depth 1 https://github.com/ioi/isolate /tmp/isolate \
     && make -C /tmp/isolate install \
     && rm -rf /tmp/isolate
 
-RUN mkdir -p /var/local/lib/isolate /var/local/lib/isolate/lock /usr/local/etc \
+RUN mkdir -p /var/local/lib/isolate /var/local/lib/isolate/lock /usr/local/etc /sys/fs/cgroup/isolate \
     && chmod 700 /var/local/lib/isolate /var/local/lib/isolate/lock \
     && printf "box_root=/var/local/lib/isolate\nlock_root=/var/local/lib/isolate/lock\nfirst_uid=10000\nlast_uid=11000\ncg_root=/sys/fs/cgroup/isolate\n" > /usr/local/etc/isolate
 
@@ -44,5 +43,4 @@ RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
 # Set working directory
 WORKDIR /home
 
-ENTRYPOINT ["/entrypoint.sh"]
-CMD ["sleep", "infinity"]
+CMD ["/entrypoint.sh"]

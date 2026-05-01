@@ -29,7 +29,7 @@ chmod 755 "$HOMEDIR"
 BOX_ID=""
 LOCK_PATH=""
 for i in $(seq 1 40); do
-    CANDIDATE=$(( (RANDOM % 900) + 100 ))
+    CANDIDATE=$(( RANDOM % 999 ))
     CANDIDATE_LOCK="$LOCK_ROOT/$CANDIDATE"
     if mkdir "$CANDIDATE_LOCK" 2>/dev/null; then
         BOX_ID=$CANDIDATE
