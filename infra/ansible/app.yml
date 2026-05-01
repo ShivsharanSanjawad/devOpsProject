@@ -52,7 +52,17 @@
       changed_when: false
 
     - name: Find unformatted EBS device
-      shell: lsblk -dpno NAME,FSTYPE | awk '$2==""' | grep -v loop | head -1 | awk '{print $1}'
+      shell: |
+        for disk in $(lsblk -dpno NAME,TYPE | awk '$2=="disk" {print $1}'); do
+          if lsblk -no MOUNTPOINT "$disk" | grep -q '/'; then
+            continue
+          fi
+          if lsblk -no FSTYPE "$disk" | grep -q .; then
+            continue
+          fi
+          echo "$disk"
+          break
+        done
       register: ebs_unformatted
       changed_when: false
 
