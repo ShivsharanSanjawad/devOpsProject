@@ -36,13 +36,13 @@ variable "ssh_key_name" {
 variable "jenkins_instance_type" {
   type        = string
   description = "Jenkins EC2 instance type"
-  default     = "t3.micro"
+  default     = "t3.small"
 }
 
 variable "sonar_instance_type" {
   type        = string
   description = "SonarQube EC2 instance type"
-  default     = "t3.small"
+  default     = "c7i-flex.large"
 }
 
 variable "app_instance_type" {
