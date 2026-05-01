@@ -29,6 +29,9 @@ RUN git clone --depth 1 https://github.com/ioi/isolate /tmp/isolate \
     && make -C /tmp/isolate install \
     && rm -rf /tmp/isolate
 
+RUN mkdir -p /var/local/lib/isolate /var/local/lib/isolate/lock /usr/local/etc \
+    && printf "box_root=/var/local/lib/isolate\nlock_root=/var/local/lib/isolate/lock\n" > /usr/local/etc/isolate
+
 # Copy the isolation script
 COPY run_isolated.sh /usr/local/bin/run_isolated.sh
 RUN sed -i 's/\r$//' /usr/local/bin/run_isolated.sh && chmod +x /usr/local/bin/run_isolated.sh
