@@ -541,8 +541,12 @@ const ProblemSolvingPage = () => {
           >
             <div
               onMouseDown={handleResizeStart}
-              className="h-2 cursor-row-resize bg-[#0b0f19] border-b border-[#111624]"
-            />
+              className="h-3 cursor-row-resize bg-[#0b0f19] border-b border-[#111624] flex items-center justify-center"
+              title="Drag to resize"
+              aria-label="Resize console"
+            >
+              <div className="w-10 h-1 rounded-full bg-[#1a1f2e]" />
+            </div>
             <div className="flex items-center gap-6 px-4 border-b border-[#1a1f2e] bg-[#0b0f19]">
               <button
                 className={`flex items-center gap-2 py-3 text-[13px] font-bold border-b-2 transition-colors ${consoleTab === 'testcases' ? 'text-cyan-400 border-cyan-400' : 'text-slate-400 border-transparent hover:text-slate-200'}`}
@@ -669,6 +673,15 @@ const ProblemSolvingPage = () => {
                             </pre>
                           </div>
                         )}
+                      </div>
+                    )}
+
+                    {submissionResult?.status === 'WA' && !firstFailedCase && (
+                      <div className="mt-4">
+                        <p className="text-[11px] font-bold text-red-400 mb-2 tracking-wider uppercase">Wrong Answer Details</p>
+                        <p className="text-xs text-slate-400">
+                          Output details are not available for this submission. Please resubmit to capture output.
+                        </p>
                       </div>
                     )}
 

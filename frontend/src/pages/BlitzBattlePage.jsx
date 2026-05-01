@@ -748,6 +748,15 @@ const BlitzBattlePage = () => {
                                     </div>
                                 )}
 
+                                {submissionResult.status === 'WA' && !firstFailedCase && (
+                                    <div>
+                                        <p className="text-[10px] font-bold text-red-400 uppercase tracking-wider mb-1">Wrong Answer Details</p>
+                                        <p className="text-[11px] text-gray-400">
+                                            Output details are not available for this submission. Please resubmit to capture output.
+                                        </p>
+                                    </div>
+                                )}
+
                                 {/* Test Case Details */}
                                 {submissionResult.verdictDetail && (() => {
                                     try {
