@@ -1,13 +1,14 @@
 #!/bin/bash
 set -e
 
-echo "=== Setting up cgroup controllers ==="
-if [ -w /sys/fs/cgroup/cgroup.subtree_control ]; then
-    echo "+memory +cpu +pids" > /sys/fs/cgroup/cgroup.subtree_control
-    echo "Controllers enabled: $(cat /sys/fs/cgroup/cgroup.subtree_control)"
-else
-    echo "WARNING: Cannot write cgroup.subtree_control — cgroup limits may not work"
-fi
+# Step 1: enable controllers at root
+echo "+memory +cpu +pids" > /sys/fs/cgroup/cgroup.subtree_control 2>/dev/null || true
 
-echo "=== Isolate ready ==="
+# Step 2: create isolate subtree and delegate controllers
+mkdir -p /sys/fs/cgroup/isolate 2>/dev/null || true
+echo "+memory +cpu +pids" > /sys/fs/cgroup/isolate/cgroup.subtree_control 2>/dev/null || true
+
+echo "Controllers at root: $(cat /sys/fs/cgroup/cgroup.subtree_control 2>/dev/null)"
+echo "Controllers at isolate: $(cat /sys/fs/cgroup/isolate/cgroup.subtree_control 2>/dev/null)"
+
 exec sleep infinity
