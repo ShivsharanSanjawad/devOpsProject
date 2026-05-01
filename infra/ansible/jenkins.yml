@@ -169,7 +169,7 @@
     # ────────────────────────────────────────────────────────────
     - name: Download Jenkins Plugin Manager
       get_url:
-        url: "https://github.com/jenkinsci/plugin-installation-manager-tool/releases/latest/download/jenkins-plugin-manager.jar"
+        url: "https://github.com/jenkinsci/plugin-installation-manager-tool/releases/download/2.14.0/jenkins-plugin-manager-2.14.0.jar"
         dest: /opt/jenkins-plugin-manager.jar
         mode: "0644"
         force: true
@@ -188,7 +188,7 @@
             git:latest \
             workflow-aggregator:latest \
             plain-credentials:latest
-      become_user: jenkins
+        chown -R jenkins:jenkins /var/lib/jenkins/plugins
       register: plugin_install
       changed_when: "'Downloaded' in plugin_install.stdout"
 
