@@ -416,9 +416,9 @@
       debug:
         msg:
           - "🟢 Jenkins     → http://{{ ansible_host }}:8080  ({{ jenkins_admin_user }} / {{ jenkins_admin_password }})"
-          - "🟢 SonarQube   → http://{{ sonar_private_ip }}:9000  (admin / {{ sonar_admin_password }})"
+          - "🟢 SonarQube   → http://{{ hostvars['sonar']['ansible_host'] }}:9000  (admin / {{ sonar_admin_password }})"
           - "🟢 Prometheus  → http://{{ ansible_host }}:9090"
           - "🟢 Grafana     → http://{{ ansible_host }}:3000  (admin / {{ grafana_admin_password }})"
-          - "🟢 App         → http://{{ app_private_ip }}"
+          - "🟢 App         → http://{{ hostvars['app']['ansible_host'] }}"
           - "✅ Node Exporter Full dashboard pre-loaded in Grafana"
           - "✅ Pipeline job 'codearena' created — push to main to trigger a build"
