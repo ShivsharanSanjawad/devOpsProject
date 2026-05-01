@@ -75,9 +75,62 @@ const ProblemSolvingPage = () => {
   const [activeTestCase, setActiveTestCase] = useState(0);
   const [consoleTab, setConsoleTab] = useState('testcases');
   const [isSolutionOpen, setIsSolutionOpen] = useState(false);
+  const [consoleHeight, setConsoleHeight] = useState(250);
+  const resizeStateRef = useRef({ isResizing: false, startY: 0, startHeight: 250 });
+  const hydratedSubmissionsRef = useRef(new Set());
 
   const verdictDetails = parseVerdictDetail(submissionResult?.verdictDetail);
   const firstFailedCase = verdictDetails.find((entry) => entry?.verdict && entry.verdict !== 'AC');
+
+  useEffect(() => {
+    const handleMouseMove = (event) => {
+      if (!resizeStateRef.current.isResizing) return;
+      const delta = resizeStateRef.current.startY - event.clientY;
+      const maxHeight = Math.max(180, Math.floor(window.innerHeight * 0.6));
+      const nextHeight = Math.min(maxHeight, Math.max(180, resizeStateRef.current.startHeight + delta));
+      setConsoleHeight(nextHeight);
+    };
+
+    const handleMouseUp = () => {
+      resizeStateRef.current.isResizing = false;
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, []);
+
+  const handleResizeStart = (event) => {
+    resizeStateRef.current.isResizing = true;
+    resizeStateRef.current.startY = event.clientY;
+    resizeStateRef.current.startHeight = consoleHeight;
+  };
+
+  useEffect(() => {
+    const hydrateVerdictDetail = async () => {
+      if (!submissionResult?.id) return;
+      if (submissionResult?.verdictDetail) return;
+      if (submissionResult?.status === 'PENDING' || submissionResult?.status === 'RUNNING') return;
+      if (hydratedSubmissionsRef.current.has(submissionResult.id)) return;
+
+      hydratedSubmissionsRef.current.add(submissionResult.id);
+      try {
+        const token = localStorage.getItem("accessToken");
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        const res = await axios.get(`${baseURL}/submissions/${submissionResult.id}`, { headers });
+        if (res?.data) {
+          setSubmissionResult(res.data);
+        }
+      } catch (err) {
+        console.warn("Failed to hydrate verdict details:", err?.message || err);
+      }
+    };
+
+    hydrateVerdictDetail();
+  }, [submissionResult?.id, submissionResult?.verdictDetail, submissionResult?.status]);
 
 
 
@@ -482,7 +535,14 @@ const ProblemSolvingPage = () => {
           </div>
 
           {/* Bottom Console Panel */}
-          <div className="h-[250px] min-h-[180px] max-h-[60vh] resize-y overflow-auto flex flex-col border-t border-[#1a1f2e] bg-[#0b0f19] shrink-0">
+          <div
+            className="min-h-[180px] max-h-[60vh] overflow-auto flex flex-col border-t border-[#1a1f2e] bg-[#0b0f19] shrink-0"
+            style={{ height: consoleHeight }}
+          >
+            <div
+              onMouseDown={handleResizeStart}
+              className="h-2 cursor-row-resize bg-[#0b0f19] border-b border-[#111624]"
+            />
             <div className="flex items-center gap-6 px-4 border-b border-[#1a1f2e] bg-[#0b0f19]">
               <button
                 className={`flex items-center gap-2 py-3 text-[13px] font-bold border-b-2 transition-colors ${consoleTab === 'testcases' ? 'text-cyan-400 border-cyan-400' : 'text-slate-400 border-transparent hover:text-slate-200'}`}

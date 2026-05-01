@@ -34,6 +34,16 @@ const getVerdictInfo = (status) => {
     }
 };
 
+const parseVerdictDetail = (detail) => {
+    if (!detail) return [];
+    try {
+        const parsed = JSON.parse(detail);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch {
+        return [];
+    }
+};
+
 const BlitzBattlePage = () => {
     const navigate = useNavigate();
     const token = localStorage.getItem("accessToken");
@@ -60,6 +70,9 @@ const BlitzBattlePage = () => {
     const timerRef = useRef(null);
     const battleRef = useRef(null);
     const pollRef = useRef(null);
+
+    const verdictDetails = parseVerdictDetail(submissionResult?.verdictDetail);
+    const firstFailedCase = verdictDetails.find((entry) => entry?.verdict && entry.verdict !== 'AC');
 
     // Keep ref in sync
     useEffect(() => { battleRef.current = battle; }, [battle]);
@@ -706,6 +719,32 @@ const BlitzBattlePage = () => {
                                         <pre className="bg-pink-500/5 border border-pink-500/20 text-pink-200/80 p-3 rounded-lg text-xs font-mono overflow-x-auto whitespace-pre-wrap">
                                             {submissionResult.compileError}
                                         </pre>
+                                    </div>
+                                )}
+
+                                {/* Wrong Answer Output */}
+                                {firstFailedCase && (firstFailedCase.actualOutput != null || firstFailedCase.expectedOutput != null || firstFailedCase.message) && (
+                                    <div>
+                                        <p className="text-[10px] font-bold text-red-400 uppercase tracking-wider mb-1">Wrong Answer Details</p>
+                                        {firstFailedCase.message && (
+                                            <p className="text-[11px] text-gray-400 mb-2">{firstFailedCase.message}</p>
+                                        )}
+                                        {firstFailedCase.actualOutput != null && (
+                                            <div className="mb-2">
+                                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Your Output</p>
+                                                <pre className="bg-[#05070a] border border-[#1a1f2e] text-gray-200 p-3 rounded-lg text-xs font-mono overflow-x-auto whitespace-pre-wrap">
+                                                    {firstFailedCase.actualOutput === '' ? '(empty)' : firstFailedCase.actualOutput}
+                                                </pre>
+                                            </div>
+                                        )}
+                                        {firstFailedCase.expectedOutput != null && (
+                                            <div>
+                                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Expected Output</p>
+                                                <pre className="bg-[#05070a] border border-[#1a1f2e] text-gray-200 p-3 rounded-lg text-xs font-mono overflow-x-auto whitespace-pre-wrap">
+                                                    {firstFailedCase.expectedOutput === '' ? '(empty)' : firstFailedCase.expectedOutput}
+                                                </pre>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
