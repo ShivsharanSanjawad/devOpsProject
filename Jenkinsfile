@@ -58,6 +58,8 @@ pipeline {
     // ─────────────────────────────────────────────────────────────
     stage('Build Docker Images') {
       steps {
+        // Prune dangling images/cache first to avoid "no space left on device"
+        sh 'docker system prune -f --volumes || true'
         sh 'docker compose build --no-cache'
       }
     }
