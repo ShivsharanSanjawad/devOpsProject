@@ -66,9 +66,24 @@
       register: ebs_unformatted
       changed_when: false
 
+    - name: Find unmounted non-root disk
+      shell: |
+        for disk in $(lsblk -dpno NAME,TYPE | awk '$2=="disk" {print $1}'); do
+          if lsblk -nrpo MOUNTPOINT "$disk" | grep -q '/'; then
+            continue
+          fi
+          if lsblk -nrpo MOUNTPOINT "$disk" | grep -q .; then
+            continue
+          fi
+          echo "$disk"
+          break
+        done
+      register: ebs_unmounted
+      changed_when: false
+
     - name: Select MySQL mount device
       set_fact:
-        mysql_mount_device: "{{ (ebs_mounted.stdout | length > 0) | ternary(ebs_mounted.stdout, ebs_unformatted.stdout) }}"
+        mysql_mount_device: "{{ (ebs_mounted.stdout | length > 0) | ternary(ebs_mounted.stdout, (ebs_unformatted.stdout | length > 0) | ternary(ebs_unformatted.stdout, ebs_unmounted.stdout)) }}"
 
     - name: Ensure MySQL device was found
       assert:
