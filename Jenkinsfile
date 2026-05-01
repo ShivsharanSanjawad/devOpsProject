@@ -44,7 +44,7 @@ pipeline {
           withCredentials([string(credentialsId: env.SONAR_TOKEN_CRED, variable: 'SONAR_TOKEN')]) {
             sh '''
               chmod +x ./mvnw
-              ./mvnw -B -DskipTests sonar:sonar \
+              ./mvnw -B -DskipTests package sonar:sonar \
                 -Dsonar.host.url=${SONAR_HOST_URL} \
                 -Dsonar.token=${SONAR_TOKEN} \
                 -Dsonar.projectKey=codearena \
