@@ -239,6 +239,11 @@ resource "aws_instance" "app" {
   key_name                    = var.ssh_key_name
   associate_public_ip_address = true
 
+  root_block_device {
+    volume_size = 20
+    volume_type = "gp3"
+  }
+
   tags = {
     Name = "codearena-app"
   }
