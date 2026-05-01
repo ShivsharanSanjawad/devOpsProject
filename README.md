@@ -1,34 +1,57 @@
 <div align="center">
 
-# CodeArena
+# DevHacks DevOps Lab Showcase
 
-**Competitive Programming Arena**
-           
+**A lab project for demonstrating DevOps concepts learned during the DevOps lab**
+
 <br>
 
-*Where Code Meets Competition*
+*Built to show the workflow, tooling, and deployment concepts, not to ship a production product.*
 
 <br>
 
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.3-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![React](https://img.shields.io/badge/React-19.2-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
-[![Docker](https://img.shields.io/badge/Docker-Sandbox-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com)
-[![Gemini](https://img.shields.io/badge/Gemini-2.5%20Flash-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev)
+[![Docker](https://img.shields.io/badge/Docker-Compose%20%26%20Sandbox-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com)
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://mysql.com)
 
 <br>
 
-A full-stack competitive programming platform with **Docker-sandboxed code execution**,<br>
-**real-time 1v1 battles**, **AI-powered plagiarism detection**, and **gamified learning**.<br>
-Built for **DevHacks 2026**.
+This repository demonstrates a full stack with **Docker-based deployment**, **backend/frontend containerization**, **sandboxed execution**, and **basic CI/CD-style project organization**.<br>
+The current emphasis is on **learning and showcasing DevOps practices**, not on final product polish.<br>
 
 <br>
 
-[Getting Started](#getting-started) · [Features](#features) · [Architecture](#system-architecture) · [Sandbox](#docker-sandbox-secure-code-execution) · [AI Integration](#gemini-ai-integration) · [API Reference](#api-reference) · [Tech Stack](#tech-stack)
+[Getting Started](#getting-started) · [Project Purpose](#project-purpose) · [Current Architecture](#current-architecture-placeholder) · [Deployment](#deployment) · [Project Details](#project-details)
 
 </div>
 
 <br>
+
+---
+
+## Project Purpose
+
+This project is not being developed as a production product.
+
+Its goal is to demonstrate DevOps concepts covered in the DevOps lab, including:
+
+- containerization with Docker
+- multi-service orchestration with Docker Compose
+- isolated sandbox execution
+- environment-based configuration
+- frontend/backend service separation
+- deployment-oriented project structure
+
+The architecture and naming in this README will be updated later as the lab work evolves.
+
+---
+
+## Current Architecture Placeholder
+
+The current architecture section is intentionally kept as a placeholder.
+
+It will be updated later with the final lab architecture diagram and deployment flow once the project structure is finalized.
 
 ---
 
@@ -56,6 +79,42 @@ Open `http://localhost:5173`.
 - Frontend: `5173`
 - Backend API: `8080`
 - MySQL: `3307` (host) -> `3306` (container)
+
+---
+
+## Deployment
+
+The project is currently organized to run with Docker Compose:
+
+- `backend` builds the Spring Boot API image
+- `frontend` builds the Vite React app image
+- `sandbox` provides the isolated code execution environment
+- `db` runs MySQL as a managed service container
+
+Use `docker compose up --build` from the project root to start the stack.
+
+---
+
+## Project Details
+
+This section groups additional notes about the project while the documentation is evolving.
+
+<details>
+<summary><b>Open project details</b></summary>
+
+### Project context
+
+The project focuses on demonstrating DevOps concepts learned during the DevOps lab, including containerization, orchestration, sandboxing, and service separation.
+
+### Additional notes
+
+- The architecture section will be updated later with a final diagram.
+- The repository is organized for lab demonstration and deployment practice.
+- The current stack uses Docker Compose for local service orchestration.
+
+This section is intentionally lightweight and will be expanded as the project evolves.
+
+</details>
 
 ---
 
