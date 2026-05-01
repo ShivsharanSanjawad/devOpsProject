@@ -1,22 +1,13 @@
 #!/bin/bash
-# entrypoint.sh
+set -e
 
-# Create isolate's cgroup subtree if cgroup v2 is available
-if [ -w /sys/fs/cgroup ]; then
-    echo "Setting up cgroup v2 for isolate..."
-    
-    # Enable controllers at root level
-    echo "+memory +cpu +pids" > /sys/fs/cgroup/cgroup.subtree_control 2>/dev/null || true
-
-    # Create isolate's cgroup
-    mkdir -p /sys/fs/cgroup/isolate 2>/dev/null || true
-    
-    # Delegate controllers to isolate's subtree
-    echo "+memory +cpu +pids" > /sys/fs/cgroup/isolate/cgroup.subtree_control 2>/dev/null || true
-    
-    echo "cgroup setup done"
+echo "=== Setting up cgroup controllers ==="
+if [ -w /sys/fs/cgroup/cgroup.subtree_control ]; then
+    echo "+memory +cpu +pids" > /sys/fs/cgroup/cgroup.subtree_control
+    echo "Controllers enabled: $(cat /sys/fs/cgroup/cgroup.subtree_control)"
 else
-    echo "WARNING: /sys/fs/cgroup not writable — cgroup limits won't work"
+    echo "WARNING: Cannot write cgroup.subtree_control — cgroup limits may not work"
 fi
 
+echo "=== Isolate ready ==="
 exec sleep infinity
