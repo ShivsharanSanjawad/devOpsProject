@@ -235,8 +235,10 @@
               envVars = envVarsNodePropertyList.get(0).getEnvVars()
           }
           envVars.put("APP_HOST", "{{ app_private_ip }}")
+          envVars.put("SONAR_HOST_URL", "http://{{ sonar_private_ip }}:9000")
           instance.save()
           println "✅ APP_HOST set to {{ app_private_ip }}"
+          println "✅ SONAR_HOST_URL set to http://{{ sonar_private_ip }}:9000"
 
     # Restart so plugins and groovy scripts are loaded!
     - name: Restart Jenkins to apply plugins and groovy init scripts
