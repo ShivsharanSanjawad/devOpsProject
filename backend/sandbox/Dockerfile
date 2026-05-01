@@ -8,13 +8,23 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
+    git \
+    make \
     python3 \
     nodejs \
     openjdk-17-jdk-headless \
     bc \
     time \
     procps \
+    libcap-dev \
+    asciidoc \
     && rm -rf /var/lib/apt/lists/*
+
+# Install isolate from source
+RUN git clone --depth 1 https://github.com/ioi/isolate /tmp/isolate \
+    && make -C /tmp/isolate \
+    && make -C /tmp/isolate install \
+    && rm -rf /tmp/isolate
 
 # Copy the isolation script
 COPY run_isolated.sh /usr/local/bin/run_isolated.sh

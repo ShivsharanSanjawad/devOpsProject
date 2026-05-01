@@ -552,7 +552,7 @@ public class JudgeService {
                                                 int memoryLimitMb, String checkerTypeStr, String username) {
         Long tcId = tc.getId();
         Path localInput = null;
-        String containerInput = "/home/" + username + "/input.txt";
+        String containerInput = "/tmp/judge_inputs/" + username + ".txt";
         String containerOutput = "/home/" + username + "/output.txt";
         String containerError = "/home/" + username + "/error.txt";
 
@@ -573,6 +573,9 @@ public class JudgeService {
                 }
             }
             Files.writeString(localInput, inputData, StandardCharsets.UTF_8);
+
+            // Ensure input staging directory exists
+            dockerExec(List.of("mkdir", "-p", "/tmp/judge_inputs"), 5000L);
 
             // Copy input into sandbox
             dockerCopy(localInput, containerInput);
