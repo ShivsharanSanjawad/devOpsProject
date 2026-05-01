@@ -101,10 +101,16 @@
         delay: 15
         timeout: 300
 
-    # Give the web server a few extra seconds to fully initialize
-    - name: Pause for SonarQube web init
-      pause:
-        seconds: 20
+    # Give the web server time to fully initialize all API endpoints
+    - name: Wait for SonarQube API to be fully UP
+      uri:
+        url: "http://localhost:9000/api/system/status"
+        method: GET
+        return_content: true
+      register: sonar_status
+      until: sonar_status.status == 200 and (sonar_status.json.status | default('DOWN')) == 'UP'
+      retries: 30
+      delay: 10
 
     # ── Change default admin password ─────────────────────────────
     - name: Change SonarQube admin password
