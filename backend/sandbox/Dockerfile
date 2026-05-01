@@ -31,7 +31,7 @@ RUN git clone --depth 1 https://github.com/ioi/isolate /tmp/isolate \
 
 RUN mkdir -p /var/local/lib/isolate /var/local/lib/isolate/lock /usr/local/etc \
     && chmod 700 /var/local/lib/isolate /var/local/lib/isolate/lock \
-    && printf "box_root=/var/local/lib/isolate\nlock_root=/var/local/lib/isolate/lock\nfirst_uid=10000\nlast_uid=11000\ncg_root=/sys/fs/cgroup/isolate\n" > /usr/local/etc/isolate
+    && printf "box_root=/var/local/lib/isolate\nlock_root=/var/local/lib/isolate/lock\nfirst_uid=10000\nnum_boxes=1000\ncg_root=/sys/fs/cgroup/isolate\n" > /usr/local/etc/isolate
 
 # Copy the isolation script
 COPY run_isolated.sh /usr/local/bin/run_isolated.sh
