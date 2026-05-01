@@ -12,44 +12,119 @@
           - lsb-release
         update_cache: true
 
-    - name: Add Jenkins apt key
-      apt_key:
-        url: https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
-        state: present
+    - name: Ensure keyrings directory exists
+      file:
+        path: /usr/share/keyrings
+        state: directory
+        mode: "0755"
+
+    # ── Jenkins Key & Repo ─────────────────────────────────────
+    - name: Import Jenkins GPG key directly from keyserver
+      shell: |
+        gpg --keyserver keyserver.ubuntu.com --recv-keys 7198F4B714ABFC68 && \
+        gpg --export 7198F4B714ABFC68 | gpg --dearmor -o /usr/share/keyrings/jenkins-keyring.gpg
+      args:
+        creates: /usr/share/keyrings/jenkins-keyring.gpg
 
     - name: Add Jenkins apt repository
       apt_repository:
-        repo: deb https://pkg.jenkins.io/debian-stable binary/
+        repo: "deb [signed-by=/usr/share/keyrings/jenkins-keyring.gpg] https://pkg.jenkins.io/debian-stable binary/"
         state: present
+        filename: jenkins
+        update_cache: false
 
-    - name: Add Docker apt key
-      apt_key:
-        url: https://download.docker.com/linux/ubuntu/gpg
-        state: present
+    # ── Docker Key & Repo ──────────────────────────────────────
+    - name: Download and dearmor Docker key
+      shell: |
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
+        gpg --dearmor -o /usr/share/keyrings/docker-keyring.gpg
+      args:
+        creates: /usr/share/keyrings/docker-keyring.gpg
+
+    - name: Get Ubuntu codename
+      command: lsb_release -cs
+      register: ubuntu_codename
+      changed_when: false
 
     - name: Add Docker apt repository
       apt_repository:
-        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu jammy stable
+        repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-keyring.gpg] https://download.docker.com/linux/ubuntu {{ ubuntu_codename.stdout }} stable"
         state: present
+        filename: docker
+        update_cache: false
 
-    - name: Install Jenkins, Java, and Docker
+    # ── Run apt update ─────────────────────────────────────────
+    - name: Run full apt-get update
+      shell: apt-get update
+      changed_when: false
+
+    # ── Install Java 21 ────────────────────────────────────────
+    - name: Install Java 21 JDK (full)
+      apt:
+        name: openjdk-21-jdk
+        state: present
+        update_cache: false
+
+    - name: Set Java 21 as default
+      alternatives:
+        name: java
+        path: /usr/lib/jvm/java-21-openjdk-amd64/bin/java
+
+    # ── Install Jenkins and Docker ─────────────────────────────
+    - name: Install Jenkins and Docker
       apt:
         name:
-          - openjdk-17-jre
           - jenkins
           - docker-ce
           - docker-ce-cli
           - docker-compose-plugin
-        update_cache: true
+        update_cache: false
 
-    - name: Ensure Jenkins is started
+    # ── Configure Jenkins Java Path ────────────────────────────
+    - name: Ensure Jenkins override directory exists
+      file:
+        path: /etc/systemd/system/jenkins.service.d
+        state: directory
+        mode: "0755"
+
+    - name: Set JAVA_HOME for Jenkins service
+      copy:
+        dest: /etc/systemd/system/jenkins.service.d/override.conf
+        content: |
+          [Service]
+          Environment="JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64"
+          Environment="PATH=/usr/lib/jvm/java-21-openjdk-amd64/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: true
+
+    # ── Start Jenkins ──────────────────────────────────────────
+    - name: Ensure Jenkins is started and enabled
       service:
         name: jenkins
         state: started
         enabled: true
 
+    - name: Wait for Jenkins to come up on port 8080
+      wait_for:
+        port: 8080
+        delay: 10
+        timeout: 90
+
+    # ── Docker group ───────────────────────────────────────────
     - name: Add jenkins user to docker group
       user:
         name: jenkins
         groups: docker
         append: true
+
+    # ── Show admin password ────────────────────────────────────
+    - name: Get Jenkins initial admin password
+      shell: cat /var/lib/jenkins/secrets/initialAdminPassword
+      register: jenkins_password
+      changed_when: false
+
+    - name: Show Jenkins initial admin password
+      debug:
+        msg: "Jenkins Admin Password: {{ jenkins_password.stdout }}"

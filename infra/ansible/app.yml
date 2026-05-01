@@ -3,7 +3,6 @@
   become: true
 
   vars:
-    mysql_mount_device: /dev/xvdf
     mysql_mount_path: /data/mysql
 
   tasks:
@@ -47,10 +46,31 @@
         state: directory
         mode: "0755"
 
+    - name: Find EBS device already mounted
+      shell: lsblk -dpno NAME,MOUNTPOINT | awk '$2=="{{ mysql_mount_path }}" {print $1}' | head -1
+      register: ebs_mounted
+      changed_when: false
+
+    - name: Find unformatted EBS device
+      shell: lsblk -dpno NAME,FSTYPE | awk '$2==""' | grep -v loop | head -1 | awk '{print $1}'
+      register: ebs_unformatted
+      changed_when: false
+
+    - name: Select MySQL mount device
+      set_fact:
+        mysql_mount_device: "{{ (ebs_mounted.stdout | length > 0) | ternary(ebs_mounted.stdout, ebs_unformatted.stdout) }}"
+
+    - name: Ensure MySQL device was found
+      assert:
+        that:
+          - mysql_mount_device | length > 0
+        fail_msg: "No suitable EBS device found for MySQL. Check volume attachment and lsblk output."
+
     - name: Create filesystem if missing
       filesystem:
         fstype: ext4
         dev: "{{ mysql_mount_device }}"
+      when: ebs_unformatted.stdout | length > 0
 
     - name: Mount MySQL data volume
       mount:

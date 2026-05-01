@@ -211,6 +211,7 @@ resource "aws_ebs_volume" "mysql_data" {
 
   tags = {
     Name = "codearena-mysql-data"
+    Purpose = "mysql"
   }
 }
 
