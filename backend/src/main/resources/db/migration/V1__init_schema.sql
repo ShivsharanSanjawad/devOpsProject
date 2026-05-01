@@ -1,0 +1,15 @@
+CREATE TABLE IF NOT EXISTS problems (
+	id CHAR(36) PRIMARY KEY,
+	title VARCHAR(255) NOT NULL,
+	body TEXT NOT NULL,
+	difficulty VARCHAR(20) NOT NULL,
+	time_limit_ms INT NOT NULL DEFAULT 2000,
+	memory_limit_mb INT NOT NULL DEFAULT 256,
+	points INT NOT NULL,
+	checker_type VARCHAR(50) NOT NULL DEFAULT 'EXACT',
+	created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	UNIQUE KEY uq_problems_title (title)
+);
+
+CREATE INDEX idx_problems_difficulty ON problems (difficulty);

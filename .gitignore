@@ -1,0 +1,47 @@
+# Environment secrets (never commit)
+.env
+.env.*
+!.env.example
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Logs / crash dumps
+*.log
+hs_err_pid*
+
+# Build artifacts
+**/target/
+**/dist/
+**/build/
+**/node_modules/
+Schema_test/
+# Added by code-review-graph
+.code-review-graph/
+
+# Python environments and caches
+.venv/
+venv/
+env/
+ENV/
+try/
+**/__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+
+# AI/editor assistant metadata
+.claude/
+.cursor/
+.kiro/
+.cursorrules
+.windsurfrules
+.mcp.json
+.opencode.json
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+frontend/README.md
+backend/HELP.md

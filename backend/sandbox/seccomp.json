@@ -1,0 +1,29 @@
+{
+  "defaultAction": "SCMP_ACT_KILL",
+  "architectures": ["SCMP_ARCH_X86_64"],
+  "syscalls": [
+    {
+      "names": [
+        "read", "write", "open", "openat", "close",
+        "stat", "fstat", "lstat", "lseek", "mmap",
+        "mprotect", "munmap", "brk", "access",
+        "dup", "dup2", "pipe", "pipe2",
+        "execve", "exit", "exit_group", "wait4", "waitpid",
+        "getpid", "getppid", "getuid", "getgid",
+        "arch_prctl", "set_tid_address", "set_robust_list",
+        "clock_gettime", "gettimeofday", "time", "nanosleep",
+        "rt_sigaction", "rt_sigprocmask", "rt_sigreturn", "sigaltstack",
+        "futex", "clone", "tgkill",
+        "getcwd", "readlink", "readlinkat", "getdents", "getdents64",
+        "fcntl", "ioctl", "pread64", "pwrite64", "sendfile",
+        "newfstatat", "statfs"
+      ],
+      "action": "SCMP_ACT_ALLOW"
+    },
+    {
+      "names": ["kill", "tkill"],
+      "action": "SCMP_ACT_ALLOW",
+      "args": [{ "index": 0, "value": 0, "op": "SCMP_CMP_EQ" }]
+    }
+  ]
+}
