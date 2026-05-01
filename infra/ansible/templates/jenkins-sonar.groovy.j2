@@ -1,24 +1,23 @@
-// Configure SonarQube server connection
-// Run via Jenkins CLI after SonarQube Scanner plugin is installed
+// Configure SonarQube server connection in Jenkins global config
+// Executed automatically by Jenkins on startup via init.groovy.d
 
 import jenkins.model.*
 import hudson.plugins.sonar.*
 import hudson.plugins.sonar.model.*
 
-def instance = Jenkins.getInstance()
-def sonarDesc = instance.getDescriptor(SonarGlobalConfiguration.class)
-
-def tokenCredId = "sonarqube-token"
-
-// Register the SonarQube token as a secret text credential first
+// Register the SonarQube token as a secret-text credential
 import com.cloudbees.plugins.credentials.*
 import com.cloudbees.plugins.credentials.domains.*
 import com.cloudbees.plugins.credentials.impl.*
 import org.jenkinsci.plugins.plaincredentials.impl.*
 import hudson.util.Secret
 
+def instance = Jenkins.getInstance()
+def tokenCredId = "sonarqube-token"
+
 def store = SystemCredentialsProvider.getInstance().getStore()
-store.getCredentials(Domain.global()).find { it.id == tokenCredId }?.with {
+// Remove existing credential if present (idempotent)
+store.getCredentials(Domain.global()).findAll { it.id == tokenCredId }.each {
     store.removeCredentials(Domain.global(), it)
 }
 store.addCredentials(Domain.global(), new StringCredentialsImpl(
@@ -27,17 +26,26 @@ store.addCredentials(Domain.global(), new StringCredentialsImpl(
     "SonarQube API Token",
     Secret.fromString("{{ sonar_token }}")
 ))
+println "✅ SonarQube token credential saved (id: ${tokenCredId})"
 
-// Configure the SonarQube server
-def installations = [
-    new SonarInstallation(
-        "sonarqube",                      // name (must match SONAR_SERVER in Jenkinsfile)
-        "http://{{ sonar_private_ip }}:9000",
-        tokenCredId,                       // token credential ID
-        null, null, null, null, null
+// Configure the SonarQube server using the correct constructor for sonar plugin >= 2.15
+// The constructor is: SonarInstallation(name, serverUrl, credentialsId, mojoVersion, additionalProperties, triggers, additionalAnalysisProperties)
+def sonarDesc = instance.getDescriptor(SonarGlobalConfiguration.class)
+
+if (sonarDesc == null) {
+    println "❌ SonarGlobalConfiguration descriptor not found — is the 'sonar' plugin installed?"
+} else {
+    def installation = new SonarInstallation(
+        "sonarqube",                              // name — must match SONAR_SERVER in Jenkinsfile
+        "http://{{ sonar_private_ip }}:9000",     // server URL (private IP, accessible within VPC)
+        tokenCredId,                              // credentials ID
+        "",                                       // mojoVersion (empty = use plugin default)
+        "",                                       // additionalProperties
+        null,                                     // triggers
+        ""                                        // additionalAnalysisProperties
     )
-]
-sonarDesc.setInstallations(installations as SonarInstallation[])
-sonarDesc.save()
-instance.save()
-println "✅ SonarQube server configured: http://{{ sonar_private_ip }}:9000"
+    sonarDesc.setInstallations(installation)
+    sonarDesc.save()
+    instance.save()
+    println "✅ SonarQube server configured: http://{{ sonar_private_ip }}:9000"
+}

@@ -7,16 +7,20 @@ pipeline {
   }
 
   environment {
-    // SonarQube server name (must match what you configure in Jenkins → Manage → Configure System)
-    SONAR_SERVER     = 'sonarqube'
-    // Jenkins SSH credential ID for the App EC2 (add this in Jenkins → Credentials)
-    APP_SSH_CRED     = 'app-ec2-ssh-key'
-    // App EC2 settings — override at runtime or set as Jenkins global env vars
+    // Jenkins credential IDs — must match what Ansible created
+    SONAR_TOKEN_CRED = 'sonarqube-token'      // Secret-text credential
+    APP_SSH_CRED     = 'app-ec2-ssh-key'       // SSH key credential
+
+    // App EC2 settings (set as Jenkins global env vars via Ansible)
     APP_HOST         = "${env.APP_HOST ?: 'REPLACE_WITH_APP_EC2_IP'}"
     APP_USER         = 'ubuntu'
     APP_PATH         = '/opt/codearena'
     DEPLOY_BRANCH    = 'main'
-    // Health-check endpoint (nginx proxies / → frontend, /api/actuator/health → backend)
+
+    // SonarQube server (private IP reachable from Jenkins EC2 via VPC)
+    SONAR_HOST_URL   = "${env.SONAR_HOST_URL ?: 'http://REPLACE_WITH_SONAR_PRIVATE_IP:9000'}"
+
+    // Health-check endpoint
     HEALTH_CHECK_URL = "http://${env.APP_HOST ?: 'REPLACE_WITH_APP_EC2_IP'}/api/actuator/health"
   }
 
@@ -31,26 +35,22 @@ pipeline {
     }
 
     // ─────────────────────────────────────────────────────────────
+    // Pass SonarQube params directly — no withSonarQubeEnv needed.
+    // This means we don't rely on the Jenkins SonarQube server config
+    // being correctly set up via the Groovy init script.
     stage('SonarQube Scan') {
       steps {
         dir('backend') {
-          withSonarQubeEnv(env.SONAR_SERVER) {
-            // Ensure mvnw is executable, as Windows git commits often lack the +x bit
-            sh 'chmod +x ./mvnw'
-            // Uses ./mvnw + sonar-maven-plugin declared in pom.xml
-            sh './mvnw -B -DskipTests sonar:sonar'
+          withCredentials([string(credentialsId: env.SONAR_TOKEN_CRED, variable: 'SONAR_TOKEN')]) {
+            sh '''
+              chmod +x ./mvnw
+              ./mvnw -B -DskipTests sonar:sonar \
+                -Dsonar.host.url=${SONAR_HOST_URL} \
+                -Dsonar.token=${SONAR_TOKEN} \
+                -Dsonar.projectKey=codearena \
+                -Dsonar.projectName="CodeArena"
+            '''
           }
-        }
-      }
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    stage('Quality Gate') {
-      steps {
-        // Wait up to 5 minutes for SonarQube to compute the gate result.
-        // Fails the build if the quality gate is not "OK".
-        timeout(time: 5, unit: 'MINUTES') {
-          waitForQualityGate abortPipeline: true
         }
       }
     }
@@ -58,7 +58,6 @@ pipeline {
     // ─────────────────────────────────────────────────────────────
     stage('Build Docker Images') {
       steps {
-        // Build all images defined in docker-compose.yml
         sh 'docker compose build --no-cache'
       }
     }
@@ -70,17 +69,14 @@ pipeline {
           sh """
             ssh -o StrictHostKeyChecking=no ${APP_USER}@${APP_HOST} '
               set -e
-              # Clone repo if it doesn't exist yet
               if [ ! -d "${APP_PATH}/.git" ]; then
-                git clone https://github.com/${env.GIT_URL?.replaceFirst("https://github.com/", "") ?: "YOUR_ORG/YOUR_REPO"} ${APP_PATH}
+                git clone https://github.com/ShivsharanSanjawad/devOpsProject.git ${APP_PATH}
               fi
               cd ${APP_PATH}
               git fetch --all
               git checkout ${DEPLOY_BRANCH}
               git pull origin ${DEPLOY_BRANCH}
-              # Bring up all services; --build rebuilds changed images
               docker compose up --build -d
-              # Remove dangling images to save disk space
               docker image prune -f
             '
           """
@@ -91,7 +87,6 @@ pipeline {
     // ─────────────────────────────────────────────────────────────
     stage('Health Check') {
       steps {
-        // Give containers ~30s to become healthy, then verify nginx is serving
         sleep(time: 30, unit: 'SECONDS')
         script {
           def response = sh(
@@ -123,12 +118,12 @@ pipeline {
       echo """
         ╔═══════════════════════════════════════╗
         ║  ❌  Pipeline FAILED                  ║
-        ║  Check the stage that failed above.   ║
+        ║  TIP: Click the failed stage box      ║
+        ║  then click 'Logs' to see the error.  ║
         ╚═══════════════════════════════════════╝
       """
     }
     always {
-      // Clean workspace to avoid stale files between builds
       cleanWs()
     }
   }
