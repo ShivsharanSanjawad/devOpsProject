@@ -54,14 +54,14 @@
         MOUNT_PATH="{{ mysql_mount_path }}"
 
         # 1. Already mounted at our target path?
-        mounted=$(lsblk -dpno NAME,MOUNTPOINT 2>/dev/null | awk -v mp="$MOUNT_PATH" '$2==mp {print $1}' | head -1)
+        mounted=$(lsblk -rpno NAME,MOUNTPOINT 2>/dev/null | awk -v mp="$MOUNT_PATH" '$2==mp {print $1}' | head -1)
         if [ -n "$mounted" ]; then
           echo "$mounted"
           exit 0
         fi
 
-        # 2. NVMe: match by EBS serial (AWS sets NVMe serial = volume-id without 'vol-' prefix)
-        for dev in /dev/nvme*n1; do
+        # 2. NVMe: Check all NVMe block devices
+        for dev in /dev/nvme[0-9]*n[0-9]*; do
           [ -b "$dev" ] || continue
           # Skip root device
           if lsblk -nrpo MOUNTPOINT "$dev" 2>/dev/null | grep -qE '^/$'; then
