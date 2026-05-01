@@ -72,7 +72,7 @@ resource "aws_route_table_association" "public" {
 
 resource "aws_security_group" "jenkins" {
   name        = "codearena-jenkins-sg"
-  description = "Allow SSH and Jenkins"
+  description = "Allow SSH, Jenkins, Prometheus, and Grafana"
   vpc_id      = aws_vpc.main.id
 
   ingress {
@@ -91,6 +91,30 @@ resource "aws_security_group" "jenkins" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    description = "Prometheus"
+    from_port   = 9090
+    to_port     = 9090
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "Grafana"
+    from_port   = 3000
+    to_port     = 3000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "node_exporter (self-scrape)"
+    from_port   = 9100
+    to_port     = 9100
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -101,7 +125,7 @@ resource "aws_security_group" "jenkins" {
 
 resource "aws_security_group" "sonar" {
   name        = "codearena-sonar-sg"
-  description = "Allow SSH and Sonar from Jenkins"
+  description = "Allow SSH, SonarQube, and node_exporter"
   vpc_id      = aws_vpc.main.id
 
   ingress {
@@ -113,11 +137,19 @@ resource "aws_security_group" "sonar" {
   }
 
   ingress {
-    description      = "SonarQube"
-    from_port        = 9000
-    to_port          = 9000
-    protocol         = "tcp"
-    security_groups  = [aws_security_group.jenkins.id]
+    description = "SonarQube (public for browser + Jenkins)"
+    from_port   = 9000
+    to_port     = 9000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description     = "node_exporter (Prometheus scrape from Jenkins)"
+    from_port       = 9100
+    to_port         = 9100
+    protocol        = "tcp"
+    security_groups = [aws_security_group.jenkins.id]
   }
 
   egress {
@@ -130,7 +162,7 @@ resource "aws_security_group" "sonar" {
 
 resource "aws_security_group" "app" {
   name        = "codearena-app-sg"
-  description = "Allow SSH and HTTP/HTTPS"
+  description = "Allow SSH, HTTP/HTTPS, and node_exporter"
   vpc_id      = aws_vpc.main.id
 
   ingress {
@@ -155,6 +187,14 @@ resource "aws_security_group" "app" {
     to_port     = 443
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description     = "node_exporter (Prometheus scrape from Jenkins)"
+    from_port       = 9100
+    to_port         = 9100
+    protocol        = "tcp"
+    security_groups = [aws_security_group.jenkins.id]
   }
 
   egress {
