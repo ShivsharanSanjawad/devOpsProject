@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y \
     procps \
     libcap-dev \
     libseccomp-dev \
+    libsystemd-dev \
     asciidoc \
     && rm -rf /var/lib/apt/lists/*
 
