@@ -31,14 +31,18 @@ RUN git clone --depth 1 https://github.com/ioi/isolate /tmp/isolate \
 
 RUN mkdir -p /var/local/lib/isolate /var/local/lib/isolate/lock /usr/local/etc \
     && chmod 700 /var/local/lib/isolate /var/local/lib/isolate/lock \
-    && printf "box_root=/var/local/lib/isolate\nlock_root=/var/local/lib/isolate/lock\nfirst_uid=10000\nlast_uid=10100\ncg_root=/sys/fs/cgroup\n" > /usr/local/etc/isolate
+    && printf "box_root=/var/local/lib/isolate\nlock_root=/var/local/lib/isolate/lock\nfirst_uid=10000\nlast_uid=11000\ncg_root=/sys/fs/cgroup/isolate\n" > /usr/local/etc/isolate
 
 # Copy the isolation script
 COPY run_isolated.sh /usr/local/bin/run_isolated.sh
 RUN sed -i 's/\r$//' /usr/local/bin/run_isolated.sh && chmod +x /usr/local/bin/run_isolated.sh
 
+# Copy entrypoint
+COPY entrypoint.sh /entrypoint.sh
+RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
+
 # Set working directory
 WORKDIR /home
 
-# Command to keep the container alive
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["sleep", "infinity"]
