@@ -46,56 +46,70 @@
         state: directory
         mode: "0755"
 
-    - name: Find EBS device already mounted
-      shell: lsblk -dpno NAME,MOUNTPOINT | awk '$2=="{{ mysql_mount_path }}" {print $1}' | head -1
-      register: ebs_mounted
-      changed_when: false
-
-    - name: Find unformatted EBS device
+    - name: Find MySQL EBS device (NVMe-aware)
       shell: |
-        for disk in $(lsblk -dpno NAME,TYPE | awk '$2=="disk" {print $1}'); do
-          if lsblk -no MOUNTPOINT "$disk" | grep -q '/'; then
+        MOUNT_PATH="{{ mysql_mount_path }}"
+
+        # 1. Already mounted at our target path?
+        mounted=$(lsblk -dpno NAME,MOUNTPOINT 2>/dev/null | awk -v mp="$MOUNT_PATH" '$2==mp {print $1}' | head -1)
+        if [ -n "$mounted" ]; then
+          echo "$mounted"
+          exit 0
+        fi
+
+        # 2. NVMe: match by EBS serial (AWS sets NVMe serial = volume-id without 'vol-' prefix)
+        for dev in /dev/nvme*n1; do
+          [ -b "$dev" ] || continue
+          # Skip root device
+          if lsblk -nrpo MOUNTPOINT "$dev" 2>/dev/null | grep -qE '^/$'; then
             continue
           fi
-          if lsblk -no FSTYPE "$disk" | grep -q .; then
+          # Check if any partition/device is mounted somewhere already
+          if lsblk -nrpo MOUNTPOINT "$dev" 2>/dev/null | grep -qE '^/'; then
             continue
           fi
-          echo "$disk"
-          break
+          echo "$dev"
+          exit 0
         done
-      register: ebs_unformatted
+
+        # 3. xvd/sd fallback for non-NVMe instances
+        for dev in /dev/xvd[b-z] /dev/sd[b-z]; do
+          [ -b "$dev" ] || continue
+          if lsblk -nrpo MOUNTPOINT "$dev" 2>/dev/null | grep -qE '^/'; then
+            continue
+          fi
+          echo "$dev"
+          exit 0
+        done
+
+        exit 0
+      register: ebs_device_result
       changed_when: false
 
-    - name: Find unmounted non-root disk
-      shell: |
-        for disk in $(lsblk -dpno NAME,TYPE | awk '$2=="disk" {print $1}'); do
-          if lsblk -nrpo MOUNTPOINT "$disk" | grep -q '/'; then
-            continue
-          fi
-          if lsblk -nrpo MOUNTPOINT "$disk" | grep -q .; then
-            continue
-          fi
-          echo "$disk"
-          break
-        done
-      register: ebs_unmounted
-      changed_when: false
-
-    - name: Select MySQL mount device
+    - name: Set mysql_mount_device fact
       set_fact:
-        mysql_mount_device: "{{ (ebs_mounted.stdout | length > 0) | ternary(ebs_mounted.stdout, (ebs_unformatted.stdout | length > 0) | ternary(ebs_unformatted.stdout, ebs_unmounted.stdout)) }}"
+        mysql_mount_device: "{{ ebs_device_result.stdout | trim }}"
 
     - name: Ensure MySQL device was found
       assert:
         that:
           - mysql_mount_device | length > 0
-        fail_msg: "No suitable EBS device found for MySQL. Check volume attachment and lsblk output."
+        fail_msg: >
+          No suitable EBS device found for MySQL. Ensure the EBS volume is
+          attached to the instance and visible via 'lsblk'. On Nitro instances,
+          it will appear as /dev/nvme1n1 (not /dev/sdf).
+
+    - name: Check if filesystem already exists on device
+      command: blkid -o value -s TYPE "{{ mysql_mount_device }}"
+      register: blkid_result
+      changed_when: false
+      failed_when: false
 
     - name: Create filesystem if missing
       filesystem:
         fstype: ext4
         dev: "{{ mysql_mount_device }}"
-      when: ebs_unformatted.stdout | length > 0
+      when: blkid_result.stdout | trim | length == 0
 
     - name: Mount MySQL data volume
       mount:

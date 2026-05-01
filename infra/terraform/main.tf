@@ -216,7 +216,9 @@ resource "aws_ebs_volume" "mysql_data" {
 }
 
 resource "aws_volume_attachment" "mysql_data" {
-  device_name = "/dev/sdf"
-  volume_id   = aws_ebs_volume.mysql_data.id
-  instance_id = aws_instance.app.id
+  device_name                    = "/dev/sdf"
+  volume_id                      = aws_ebs_volume.mysql_data.id
+  instance_id                    = aws_instance.app.id
+  force_detach                   = true
+  stop_instance_before_detaching = true
 }
