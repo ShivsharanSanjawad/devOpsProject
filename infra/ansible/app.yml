@@ -43,6 +43,12 @@
         state: started
         enabled: true
 
+    - name: Add ubuntu user to docker group
+      user:
+        name: ubuntu
+        groups: docker
+        append: true
+
     - name: Create MySQL mount path
       file:
         path: "{{ mysql_mount_path }}"
