@@ -154,10 +154,7 @@
     # ── Wait until Jenkins API responds ───────────────────────
     - name: Wait for Jenkins to accept API connections
       uri:
-        url: "{{ jenkins_url }}/api/json"
-        user: "{{ jenkins_admin_user }}"
-        password: "{{ jenkins_admin_password }}"
-        force_basic_auth: true
+        url: "{{ jenkins_url }}login"
         status_code: 200
       register: jenkins_api
       until: jenkins_api.status == 200
@@ -255,10 +252,7 @@
     # Wait until Jenkins API responds after restart (ensures Groovy scripts finished)
     - name: Wait for Jenkins to accept API connections after restart
       uri:
-        url: "{{ jenkins_url }}/api/json"
-        user: "{{ jenkins_admin_user }}"
-        password: "{{ jenkins_admin_password }}"
-        force_basic_auth: true
+        url: "{{ jenkins_url }}login"
         status_code: 200
       register: jenkins_api_again
       until: jenkins_api_again.status == 200
