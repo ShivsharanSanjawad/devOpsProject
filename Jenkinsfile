@@ -21,7 +21,7 @@ pipeline {
     SONAR_HOST_URL   = "${env.SONAR_HOST_URL ?: 'http://REPLACE_WITH_SONAR_PRIVATE_IP:9000'}"
 
     // Health-check endpoint
-    HEALTH_CHECK_URL = "http://${env.APP_HOST ?: 'REPLACE_WITH_APP_EC2_IP'}/api/actuator/health"
+    HEALTH_CHECK_URL = "http://${env.APP_HOST ?: 'REPLACE_WITH_APP_EC2_IP'}/api/problems"
   }
 
   stages {
