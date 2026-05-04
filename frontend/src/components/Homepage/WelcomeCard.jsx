@@ -15,7 +15,7 @@ const WelcomeCard = ({ profileData }) => {
         {/* Text Content */}
         <div className="flex flex-col">
           <h2 className="text-xl md:text-[22px] font-bold text-white tracking-wide mb-1">
-            welcome back, <span className="text-cyan-400">{profileData?.username || 'Gladiator'}</span>
+            welcoGG back, <span className="text-cyan-400">{profileData?.username || 'Gladiator'}</span>
           </h2>
           <div className="flex items-center gap-2">
             {/* Pulsing Green Dot */}
